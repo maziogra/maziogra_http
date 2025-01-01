@@ -5,5 +5,4 @@ cd build
 
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 
-# Esegui la compilazione
 make
