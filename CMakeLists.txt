@@ -6,10 +6,13 @@ add_library(
 	src/CoreSocket.cpp
 )
 
-
+add_library(
+	ServerHTTP
+	src/ServerHTTP.cpp
+)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_executable(main src/Main.cpp)
 
-target_link_libraries(main PRIVATE CoreSocket)
+target_link_libraries(main PRIVATE CoreSocket ServerHTTP)

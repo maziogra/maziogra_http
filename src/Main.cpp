@@ -1,6 +1,7 @@
-#include "CoreSocket.h"
-#include <sys/socket.h>
+#include <ServerHTTP.h>
 
 int main() {
-  maziogra_http::CoreSocket c(PF_INET, SOCK_STREAM, 0, 8080);
+  maziogra_http::ServerHTTP s(8080);
+  s.start();
+  return 0;
 }
