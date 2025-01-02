@@ -9,6 +9,7 @@ add_library(
 add_library(
 	ServerHTTP
 	src/HttpRequest.cpp
+	src/HttpResponse.cpp
 	src/ServerHTTP.cpp
 )
 

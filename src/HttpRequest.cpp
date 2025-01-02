@@ -1,4 +1,6 @@
 #include <HttpRequest.h>
+#include <sstream>
+#include <iostream>
 
 maziogra_http::HttpRequest::HttpRequest(const std::string &s) {
   std::istringstream stream(s);
@@ -18,6 +20,13 @@ maziogra_http::HttpRequest::HttpRequest(const std::string &s) {
     std::getline(stream, body, '\0');
   }
 }
+
+maziogra_http::HttpRequest::HttpRequest(
+    const std::string &method, const std::string &path,
+    const std::string &version,
+    const std::map<std::string, std::string> &headers, const std::string &body)
+    : method(method), path(path), version(version), headers(headers),
+      body(body) {}
 
 void maziogra_http::HttpRequest::printRequest() const {
   std::cout << "Method: " << method << "\n";

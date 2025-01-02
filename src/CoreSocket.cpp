@@ -1,7 +1,15 @@
 #include <CoreSocket.h>
 
-maziogra_http::CoreSocket::CoreSocket(int domain, int type, int protocol,
-                                      int port)
+#include <cstring>
+#include <iostream>
+#include <netinet/in.h>
+#include <stdexcept>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+maziogra_http::CoreSocket::CoreSocket(const int domain, const int type,
+                                      const int protocol, const int port)
     : domain(domain), type(type), protocol(protocol), port(port) {
   sock = socket(domain, type, protocol);
   if (sock < 0)

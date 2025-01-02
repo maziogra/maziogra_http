@@ -1,12 +1,6 @@
 #pragma once
 
-#include <cstring>
-#include <iostream>
 #include <netinet/in.h>
-#include <stdexcept>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 namespace maziogra_http {
 class CoreSocket {
@@ -17,7 +11,8 @@ private:
   sockaddr_in addr;
 
 public:
-  CoreSocket(int domain, int type, int protocol, int port);
+  CoreSocket(const int domain, const int type, const int protocol,
+             const int port);
   ~CoreSocket();
 
   int getSock() const { return sock; }

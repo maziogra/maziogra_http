@@ -1,20 +1,21 @@
+#pragma once
 #include <HttpRequest.h>
+#include <HttpResponse.h>
 #include <CoreSocket.h>
 #include <functional>
 #include <string>
-#include <thread>
-#include <sstream>
+
 
 namespace maziogra_http {
 class ServerHTTP {
 private:
   CoreSocket csock;
-  std::map<std::string, std::function<std::string(HttpRequest&)>> routes;
+  std::map<std::string, std::function<HttpResponse(const HttpRequest&)>> routes;
 public:
-  ServerHTTP(int port);
+  ServerHTTP(const int port);
 
   void start();
-  void handleConnection(int);
-  void addRoute(const std::string, const std::string, const std::function<std::string(const HttpRequest&)>);
+  void handleConnection(const int clientSock);
+  void addRoute(const std::string& path, const std::string& method, const std::function<HttpResponse(const HttpRequest&)>& handler);
 };
 } // namespace maziogra_http

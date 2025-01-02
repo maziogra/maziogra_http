@@ -1,8 +1,13 @@
+#include <HttpResponse.h>
 #include <HttpRequest.h>
 #include <ServerHTTP.h>
-#include <sys/socket.h>
+#include <iostream>
+#include <stdexcept>
+#include <thread>
+#include <unistd.h>
 
-maziogra_http::ServerHTTP::ServerHTTP(int port)
+
+maziogra_http::ServerHTTP::ServerHTTP(const int port)
     : csock(PF_INET, SOCK_STREAM, 0, port) {}
 
 void maziogra_http::ServerHTTP::start() {
@@ -25,7 +30,7 @@ void maziogra_http::ServerHTTP::start() {
   }
 }
 
-void maziogra_http::ServerHTTP::handleConnection(int clientSock) {
+void maziogra_http::ServerHTTP::handleConnection(const int clientSock) {
   char buffer[1024] = {0};
 
   int received = recv(clientSock, buffer, sizeof(buffer), 0);
@@ -39,21 +44,20 @@ void maziogra_http::ServerHTTP::handleConnection(int clientSock) {
   std::string search = req.getPath() + ":" + req.getMethod();
   std::cout << search << std::endl;
   auto route = routes.find(search);
-  std::string res;
+  HttpResponse temp;
   if (route != routes.end()) {
-    std::string temp = route->second(req);
-    res = "HTTP/1.1 200\r\nContent Lenght " + std::to_string(temp.length()) +
-          "\r\n\r\n" + temp;
+    temp = route->second(req);
   } else {
-    res = "HTTP/1.1 404 Not Found\r\nContent Length: 5\r\n\r\nError";
+    temp = HttpResponse(404, "Not Found");
   }
+  std::string res = temp.toString();
   send(clientSock, res.c_str(), res.size(), 0);
   close(clientSock);
 }
 
 void maziogra_http::ServerHTTP::addRoute(
-    const std::string path, const std::string method,
-    const std::function<std::string(const HttpRequest &)> handler) {
+    const std::string &path, const std::string &method,
+    const std::function<HttpResponse(const HttpRequest &)> &handler) {
   std::string first = path + ":" + method;
   routes[first] = handler;
 }
