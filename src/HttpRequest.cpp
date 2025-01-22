@@ -5,7 +5,20 @@
 maziogra_http::HttpRequest::HttpRequest(const std::string &s) {
   std::istringstream stream(s);
   stream >> method >> path >> version;
+  if (stream) {
+    std::getline(stream, body, '\0');
+  }
+  parseHeaders(stream);
+}
 
+maziogra_http::HttpRequest::HttpRequest(
+    const std::string &method, const std::string &path,
+    const std::string &version,
+    const std::map<std::string, std::string> &headers, const std::string &body)
+    : method(method), path(path), version(version), headers(headers),
+      body(body) {}
+
+void maziogra_http::HttpRequest::parseHeaders(std::istringstream& stream) {
   std::string line;
   while (std::getline(stream, line) && !line.empty()) {
     int pos = line.find(":");
@@ -15,18 +28,7 @@ maziogra_http::HttpRequest::HttpRequest(const std::string &s) {
       headers[name] = value;
     }
   }
-
-  if (stream) {
-    std::getline(stream, body, '\0');
-  }
 }
-
-maziogra_http::HttpRequest::HttpRequest(
-    const std::string &method, const std::string &path,
-    const std::string &version,
-    const std::map<std::string, std::string> &headers, const std::string &body)
-    : method(method), path(path), version(version), headers(headers),
-      body(body) {}
 
 void maziogra_http::HttpRequest::printRequest() const {
   std::cout << "Method: " << method << "\n";

@@ -1,11 +1,10 @@
-#include <HttpResponse.h>
 #include <HttpRequest.h>
+#include <HttpResponse.h>
 #include <ServerHTTP.h>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
 #include <unistd.h>
-
 
 maziogra_http::ServerHTTP::ServerHTTP(const int port)
     : csock(PF_INET, SOCK_STREAM, 0, port) {}
@@ -40,24 +39,33 @@ void maziogra_http::ServerHTTP::handleConnection(const int clientSock) {
     return;
   }
 
+  HttpResponse res;
   HttpRequest req(std::string(buffer, sizeof buffer));
+  for(auto& middleware : middlewares) {
+    middleware(req, res); 
+  }
+
   std::string search = req.getPath() + ":" + req.getMethod();
   std::cout << search << std::endl;
   auto route = routes.find(search);
-  HttpResponse temp;
+
   if (route != routes.end()) {
-    temp = route->second(req);
+    res = route->second(req);
   } else {
-    temp = HttpResponse(404, "Not Found");
+    res = HttpResponse(404, "Not Found");
   }
-  std::string res = temp.toString();
-  send(clientSock, res.c_str(), res.size(), 0);
+  std::string temp = res.toString();
+  send(clientSock, temp.c_str(), temp.size(), 0);
   close(clientSock);
 }
 
-void maziogra_http::ServerHTTP::addRoute(
-    const std::string &path, const std::string &method,
-    const std::function<HttpResponse(const HttpRequest &)> &handler) {
+void maziogra_http::ServerHTTP::addRoute(const std::string &path,
+                                         const std::string &method,
+                                         const HandlerFunction &handler) {
   std::string first = path + ":" + method;
   routes[first] = handler;
+}
+
+void maziogra_http::ServerHTTP::use(const Middleware &middleware) {
+  middlewares.push_back(middleware);
 }

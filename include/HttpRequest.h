@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <sstream>
 #include <string>
 
 namespace maziogra_http {
@@ -9,8 +10,10 @@ private:
   std::string path;
   std::string version;
   std::map<std::string, std::string> headers;
+  std::map<std::string, std::string> urlParams;
   std::string body;
 
+  void parseHeaders(std::istringstream&);
 public:
   HttpRequest(const std::string &);
   HttpRequest(const std::string &method, const std::string &path,
@@ -30,7 +33,7 @@ public:
   void setMethod(std::string &method) { this->method = method; }
   void setPath(std::string &path) { this->path = path; }
   void setVersion(std::string &version) { this->version = version; }
-  void setHeaders(std::map<std::string, std::string>& headers) {
+  void setHeaders(std::map<std::string, std::string> &headers) {
     this->headers = headers;
   }
   void setBody(const std::string &body) { this->body = body; }
