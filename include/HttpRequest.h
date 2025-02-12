@@ -13,12 +13,15 @@ private:
   std::map<std::string, std::string> urlParams;
   std::string body;
 
-  void parseHeaders(std::istringstream&);
+  void parseHeaders(std::istringstream &headers);
+  void parseUrlParams();
+
 public:
   HttpRequest(const std::string &);
   HttpRequest(const std::string &method, const std::string &path,
               const std::string &version,
               const std::map<std::string, std::string> &headers,
+              const std::map<std::string, std::string> &urlParams,
               const std::string &body);
   void printRequest() const;
 
@@ -28,6 +31,9 @@ public:
   const std::map<std::string, std::string> &getHeaders() const {
     return headers;
   }
+  const std::map<std::string, std::string> &getUrlParams() const {
+    return urlParams;
+  }
   const std::string &getBody() const { return body; }
 
   void setMethod(std::string &method) { this->method = method; }
@@ -35,6 +41,9 @@ public:
   void setVersion(std::string &version) { this->version = version; }
   void setHeaders(std::map<std::string, std::string> &headers) {
     this->headers = headers;
+  }
+  void setUrlParams(std::map<std::string, std::string> &urlParams) {
+    this->urlParams = urlParams;
   }
   void setBody(const std::string &body) { this->body = body; }
 };
