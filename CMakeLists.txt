@@ -17,4 +17,9 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_executable(main src/Main.cpp)
 
+if(WIN32)
+	target_link_libraries(CoreSocket PRIVATE ws2_32)
+	target_link_libraries(ServerHTTP PRIVATE ws2_32)
+endif()
+
 target_link_libraries(main PRIVATE CoreSocket ServerHTTP)

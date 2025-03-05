@@ -1,6 +1,10 @@
 #pragma once
-
+#ifdef _WIN32
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
 #include <netinet/in.h>
+#endif
 
 namespace maziogra_http {
 class CoreSocket {

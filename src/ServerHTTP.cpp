@@ -1,10 +1,19 @@
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
+#include <unistd.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#endif
+
 #include <HttpRequest.h>
 #include <HttpResponse.h>
 #include <ServerHTTP.h>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-#include <unistd.h>
 
 maziogra_http::ServerHTTP::ServerHTTP(const int port)
     : csock(PF_INET, SOCK_STREAM, 0, port) {}
@@ -35,7 +44,11 @@ void maziogra_http::ServerHTTP::handleConnection(const int clientSock) {
   int received = recv(clientSock, buffer, sizeof(buffer), 0);
   if (received < 0) {
     std::cerr << "Error receiving data" << std::endl;
+#ifdef _WIN32
+    closesocket(clientSock);
+#else
     close(clientSock);
+#endif
     return;
   }
 
@@ -50,13 +63,22 @@ void maziogra_http::ServerHTTP::handleConnection(const int clientSock) {
   auto route = routes.find(search);
 
   if (route != routes.end()) {
-    res = route->second(req);
+    try {
+      res = route->second(req);
+    } catch (const std::exception& e) {
+      std::cout << e.what() << std::endl;
+      res = HttpResponse(500, "Internal Server Error");
+    }
   } else {
     res = HttpResponse(404, "Not Found");
   }
   std::string temp = res.toString();
   send(clientSock, temp.c_str(), temp.size(), 0);
+#ifdef _WIN32
+  closesocket(clientSock);
+#else
   close(clientSock);
+#endif
 }
 
 void maziogra_http::ServerHTTP::addRoute(const std::string &path,
