@@ -1,8 +1,8 @@
 #ifndef SERVERHTTP_H
 #define SERVERHTTP_H
+#include <functional>
 #include <socket/Socket.h>
-
-#include "socket/BaseSocket.h"
+#include <socket/BaseSocket.h>
 
 
 namespace maziogra_http {
@@ -16,7 +16,7 @@ namespace maziogra_http {
     public:
         ServerHTTP(int secure) : secure(secure) {
             if (secure) {
-                // s = std::make_unique<SecureSocket>(); // quando la implementerai
+                // s = std::make_unique<SecureSocket>();
             } else
                 s = std::make_unique<BaseSocket>();
         }
