@@ -20,6 +20,17 @@ namespace maziogra_http {
             parseRequest(std::move(rawRequest));
         }
 
+        void addHeader(const std::string &key, const std::string &value) {
+            headers[key] = value;
+        }
+
+        void removeHeader(const std::string &key) {
+            auto it = headers.find(key);
+            if (it != headers.end()) {
+                headers.erase(it);
+            }
+        }
+
         std::string getMethod() const {
             return method;
         }
