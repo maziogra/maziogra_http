@@ -14,4 +14,12 @@ namespace maziogra_http {
         }
     }
 
+    void ServerHTTP::addRoute(std::string method, std::string path, Route route) {
+        routes[method + ":" + path] = route;
+    }
+
+    void ServerHTTP::addMiddleware(Middleware middleware) {
+        middlewares.push_back(middleware);
+    }
+
 }

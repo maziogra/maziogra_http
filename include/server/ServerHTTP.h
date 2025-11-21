@@ -3,14 +3,21 @@
 #include <functional>
 #include <socket/Socket.h>
 #include <socket/BaseSocket.h>
+#include <map>
+#include <vector>
+#include <server/HttpRequest.h>
+#include <server/HttpResponse.h>
 
 
 namespace maziogra_http {
+    using Route = std::function<HttpResponse(const HttpRequest& request)>;
+    using Middleware = std::function<void(const HttpRequest& request)>;
     class ServerHTTP {
     protected:
         std::unique_ptr<Socket> s;
         int port;
-        // TODO map of routes and list of middlewares
+        std::map<std::string, Route> routes;
+        std::vector<Middleware> middlewares;
         // 0 no 1 yes
         int secure;
     public:
@@ -25,11 +32,8 @@ namespace maziogra_http {
         };
 
         void start(int port);
-        // TODO fix this methods, these are not completed
-        // void addRoute();
-        // void removeRoute();
-        // void addMiddleware();
-        // void removeMiddleware();
+        void addRoute(std::string method, std::string path, Route lambda);
+        void addMiddleware(Middleware middleware);
     };
 }
 
