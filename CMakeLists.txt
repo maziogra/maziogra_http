@@ -14,6 +14,8 @@ add_executable(maziogra_http main.cpp
         src/Server/HttpRequest.cpp
         include/server/HttpRequest.h
         include/server/HttpResponse.h
+        src/Server/ServerThread.cpp
+        include/server/ServerThread.h
 )
 
 target_link_libraries(maziogra_http PRIVATE ws2_32)

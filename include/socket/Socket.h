@@ -15,6 +15,9 @@ namespace maziogra_http {
         virtual std::unique_ptr<Socket> accept() = 0;
         virtual int send(const char* data, size_t size) = 0;
         virtual int receive(char* buffer, size_t size) = 0;
+        SOCKET getSocket() const {
+            return sock;
+        }
 
         Socket(const Socket&) = delete;
         Socket& operator=(const Socket&) = delete;

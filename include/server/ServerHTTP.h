@@ -8,10 +8,9 @@
 #include <server/HttpRequest.h>
 #include <server/HttpResponse.h>
 
-
 namespace maziogra_http {
-    using Route = std::function<HttpResponse(const HttpRequest& request)>;
-    using Middleware = std::function<void(const HttpRequest& request)>;
+    using Route = std::function<void(HttpRequest& request, HttpResponse& response)>;
+    using Middleware = std::function<void(HttpRequest& request, HttpResponse& response, std::function<void()> callback)>;
     class ServerHTTP {
     protected:
         std::unique_ptr<Socket> s;

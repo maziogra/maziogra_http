@@ -16,7 +16,10 @@ namespace maziogra_http {
             headers["Content-Type"] = "application/json";
             headers["Content-Length"] = std::to_string(body.length());
         };
-        HttpResponse();
+        HttpResponse() {
+            statusCode = 200;
+            body = "";
+        };
 
         void addHeader(const std::string &key, const std::string &value) {
             headers[key] = value;
@@ -79,6 +82,17 @@ namespace maziogra_http {
             statusCode = other.statusCode;
             body = std::move(other.body);
             return *this;
+        }
+
+        std::string getRawResponse() {
+            std::string response = "";
+            response += version + " " + std::to_string(statusCode) + "\r\n";
+            for (auto it = headers.begin(); it != headers.end(); it++) {
+                response += it->first + ": " + it->second + "\r\n";
+            }
+            response += "\r\n";
+            response += body;
+            return response;
         }
     };
 }
