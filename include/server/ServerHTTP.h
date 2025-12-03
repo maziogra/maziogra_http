@@ -13,6 +13,7 @@ namespace maziogra_http {
     using Middleware = std::function<void(HttpRequest& request, HttpResponse& response, std::function<void()> callback)>;
     class ServerHTTP {
     protected:
+        static std::string default404Message;
         std::unique_ptr<Socket> s;
         int port;
         std::map<std::string, Route> routes;
@@ -33,6 +34,8 @@ namespace maziogra_http {
         void start(int port);
         void addRoute(std::string method, std::string path, Route lambda);
         void addMiddleware(Middleware middleware);
+        static void setDefault404Message(std::string message) {default404Message = message;}
+        static std::string getDefault404Message() {return default404Message;}
     };
 }
 

@@ -4,6 +4,7 @@
 #include "server/ServerThread.h"
 
 namespace maziogra_http {
+    std::string ServerHTTP::default404Message = "<h1>NOT FOUND</h1>";
     void ServerHTTP::start(int port) {
         s->create(port);
         std::cout << "Server started on port " << port << std::endl;

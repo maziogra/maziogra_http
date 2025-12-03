@@ -10,7 +10,4 @@ int main() {
         res.setBody("<html><body><h1>Benvenuto su /home!</h1></body></html>");
     });
     server.start(1984);
-
-
-
 }

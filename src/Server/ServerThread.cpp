@@ -42,7 +42,7 @@ namespace maziogra_http {
                 executePipeline(0, request, response);
             } else {
                 response.setStatusCode(404);
-                // TODO let the developer choose a default page to show
+                response.setBody(ServerHTTP::getDefault404Message());
             }
             response.addHeader("Content-Length", std::to_string(std::size(response.getBody())));
             sock->send(response.getRawResponse().c_str(), response.getRawResponse().size());
