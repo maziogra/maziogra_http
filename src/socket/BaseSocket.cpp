@@ -1,26 +1,28 @@
 #include <iostream>
 #include <socket/BaseSocket.h>
-#include <winsock2.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <socket/Socket.h>
 #include <memory>
 #include <stdexcept>
 
 namespace maziogra_http {
-
     bool BaseSocket::create(const int port) {
         sock = ::socket(AF_INET, SOCK_STREAM, 0);
-        if (sock == INVALID_SOCKET) return false;
+        if (sock == -1) return false;
 
         sockaddr_in sockAddr{};
         sockAddr.sin_family = AF_INET;
         sockAddr.sin_port = htons(port);
         sockAddr.sin_addr.s_addr = INADDR_ANY;
 
-        if (::bind(sock, (sockaddr*)&sockAddr, sizeof(sockAddr)) == SOCKET_ERROR) {
+        if (::bind(sock, (sockaddr*)&sockAddr, sizeof(sockAddr)) < 0) {
             close();
             return false;
         }
 
-        if (::listen(sock, SOMAXCONN) == SOCKET_ERROR) {
+        if (::listen(sock, SOMAXCONN) < 0) {
             close();
             return false;
         }
@@ -30,15 +32,15 @@ namespace maziogra_http {
 
 
     void BaseSocket::close() {
-        if (sock != INVALID_SOCKET) {
-            ::closesocket(sock);
-            sock = INVALID_SOCKET;
+        if (sock != -1) {
+            ::close(sock);
+            sock = -1;
         }
     }
 
     std::unique_ptr<Socket> BaseSocket::accept() {
-        SOCKET clientSocket = ::accept(sock, nullptr, nullptr);
-        if (clientSocket == INVALID_SOCKET) return nullptr;
+        int clientSocket = ::accept(sock, nullptr, nullptr);
+        if (clientSocket == -1) return nullptr;
 
         auto client = std::make_unique<BaseSocket>();
         client->sock = clientSocket;

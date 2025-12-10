@@ -1,6 +1,5 @@
 #include <iostream>
 #include <server/ServerHTTP.h>
-
 #include "server/ServerThread.h"
 
 namespace maziogra_http {

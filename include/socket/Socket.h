@@ -1,8 +1,6 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <memory>
 namespace maziogra_http {
     class Socket {
@@ -15,7 +13,7 @@ namespace maziogra_http {
         virtual std::unique_ptr<Socket> accept() = 0;
         virtual int send(const char* data, size_t size) = 0;
         virtual int receive(char* buffer, size_t size) = 0;
-        SOCKET getSocket() const {
+        int getSocket() const {
             return sock;
         }
 
@@ -25,7 +23,7 @@ namespace maziogra_http {
         Socket& operator=(Socket&&) noexcept = default;
 
     protected:
-        SOCKET sock = INVALID_SOCKET;
+        int sock = -1;
     };
 
 }

@@ -1,26 +1,16 @@
 #include <socket/Socket.h>
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
 #ifndef BASESOCKET_H
 #define BASESOCKET_H
 
 
 namespace maziogra_http {
     class BaseSocket : public Socket {
-    protected:
-        WSADATA wsaData {};
     public:
-        BaseSocket() {
-            if (WSAStartup(MAKEWORD(2,2), &wsaData) != NO_ERROR) {
-                throw std::runtime_error("WSAStartup failed");
-            }
-        }
+        BaseSocket() = default;
 
         ~BaseSocket() {
             close();
-            WSACleanup();
         }
 
         bool create(int port) override;
