@@ -1,6 +1,7 @@
 #include <cstring>
 #include <server/ServerThread.h>
 #include <sys/socket.h>
+#include <map>
 
 namespace maziogra_http {
     void ServerThread::executePipeline(int index, HttpRequest& req, HttpResponse& res) {

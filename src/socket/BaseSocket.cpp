@@ -1,11 +1,10 @@
-#include <iostream>
 #include <socket/BaseSocket.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <socket/Socket.h>
 #include <memory>
-#include <stdexcept>
+#include <unistd.h>
 
 namespace maziogra_http {
     bool BaseSocket::create(const int port) {
