@@ -12,6 +12,8 @@ add_executable(maziogra_http
     src/server/ServerHTTP.cpp
     src/server/HttpRequest.cpp
     src/server/ServerThread.cpp
+        include/socket/SecureSocket.h
+        src/socket/SecureSocket.cpp
 )
 
 target_sources(maziogra_http PRIVATE
