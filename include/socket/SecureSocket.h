@@ -9,8 +9,11 @@ namespace maziogra_http {
     class SecureSocket : public Socket {
     public:
         SecureSocket();
-        ~SecureSocket();
+        ~SecureSocket() {
+            close();
+        };
 
+        bool create(int port) override;
         bool create(int port,
                     const char* certFile,
                     const char* keyFile);
@@ -29,6 +32,8 @@ namespace maziogra_http {
     private:
         SSL_CTX* ctx = nullptr;
         SSL* ssl = nullptr;
+        bool owns_ctx = false;
+
     };
 
 }

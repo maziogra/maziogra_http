@@ -8,6 +8,8 @@
 #include <server/HttpRequest.h>
 #include <server/HttpResponse.h>
 
+#include "socket/SecureSocket.h"
+
 namespace maziogra_http {
     using Route = std::function<void(HttpRequest& request, HttpResponse& response)>;
     using Middleware = std::function<void(HttpRequest& request, HttpResponse& response, std::function<void()> callback)>;
@@ -23,7 +25,7 @@ namespace maziogra_http {
     public:
         ServerHTTP(int secure) : secure(secure) {
             if (secure) {
-                // s = std::make_unique<SecureSocket>();
+                s = std::make_unique<SecureSocket>();
             } else
                 s = std::make_unique<BaseSocket>();
         }
@@ -32,6 +34,10 @@ namespace maziogra_http {
         };
 
         void start(int port);
+        void start(int port,
+           const char* certFile,
+           const char* keyFile);
+
         void addRoute(std::string method, std::string path, Route lambda);
         void addMiddleware(Middleware middleware);
         static void setDefault404Message(std::string message) {default404Message = message;}

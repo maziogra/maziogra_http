@@ -21,10 +21,6 @@ namespace maziogra_http {
         }
     }
 
-    SecureSocket::~SecureSocket() {
-        close();
-    }
-
     void SecureSocket::close() {
         if (ssl) {
             SSL_shutdown(ssl);
@@ -37,15 +33,20 @@ namespace maziogra_http {
             sock = -1;
         }
 
-        if (ctx) {
+        if (ctx && owns_ctx) {
             SSL_CTX_free(ctx);
-            ctx = nullptr;
         }
+
+        ctx = nullptr;
     }
 
+    bool SecureSocket::create(int port) {
+        return false;
+    }
 
     bool SecureSocket::create(int port, const char *certFile, const char *keyFile) {
         ctx = SSL_CTX_new(TLS_server_method());
+        owns_ctx = true;
         if (!ctx) {
             ERR_print_errors_fp(stderr);
             return false;
@@ -56,12 +57,12 @@ namespace maziogra_http {
             return false;
         }
 
-        if (!SSL_CTX_check_private_key(ctx)) {
+        if (SSL_CTX_use_PrivateKey_file(ctx, keyFile, SSL_FILETYPE_PEM) <= 0) {
             ERR_print_errors_fp(stderr);
             return false;
         }
 
-        if (SSL_CTX_use_PrivateKey_file(ctx, keyFile, SSL_FILETYPE_PEM) <= 0) {
+        if (!SSL_CTX_check_private_key(ctx)) {
             ERR_print_errors_fp(stderr);
             return false;
         }
@@ -90,12 +91,12 @@ namespace maziogra_http {
 
     std::unique_ptr<Socket> SecureSocket::accept() {
         int clientSocket = ::accept(sock, nullptr, nullptr);
-        if (clientSocket == -1) {
-            return nullptr;
-        }
+        if (clientSocket == -1) return nullptr;
 
         auto client = std::make_unique<SecureSocket>();
         client->sock = clientSocket;
+        client->ctx = ctx;
+        client->owns_ctx = false;
 
         client->ssl = SSL_new(ctx);
         if (!client->ssl) {
@@ -107,13 +108,14 @@ namespace maziogra_http {
 
         if (SSL_accept(client->ssl) <= 0) {
             ERR_print_errors_fp(stderr);
-            SSL_free(client->ssl);
             ::close(clientSocket);
+            client->ssl = nullptr;
             return nullptr;
         }
 
         return client;
     }
+
 
     int SecureSocket::send(const char *data, size_t size) {
         if (!ssl) return -1;

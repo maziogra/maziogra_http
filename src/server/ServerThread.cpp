@@ -1,4 +1,5 @@
 #include <cstring>
+#include <iostream>
 #include <server/ServerThread.h>
 #include <sys/socket.h>
 #include <map>
@@ -20,7 +21,7 @@ namespace maziogra_http {
         int tv = 30000;
         ::setsockopt(sock->getSocket(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
         while (true) {
-            int bytes = ::recv(sock->getSocket(), buffer, std::size(buffer), 0);
+            int bytes = sock->receive(buffer, std::size(buffer));
             // check if the error is because of timeout
             if (bytes < 0) {
                 // if (errno == EAGAIN || errno == EWOULDBLOCK)
