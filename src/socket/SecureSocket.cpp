@@ -116,13 +116,32 @@ namespace maziogra_http {
         return client;
     }
 
-
-    int SecureSocket::send(const char *data, size_t size) {
+    ssize_t SecureSocket::send(const char *data, size_t size) {
         if (!ssl) return -1;
-        return SSL_write(ssl, data, (int) (size));
+
+        ssize_t totalSent = 0;
+
+        while (totalSent < size) {
+            ssize_t n = SSL_write(ssl, data + totalSent, static_cast<int>(size - totalSent));
+            if (n > 0) {
+                totalSent += n;
+                continue;
+            }
+
+            int err = SSL_get_error(ssl, n);
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                continue;
+            } else if (err == SSL_ERROR_ZERO_RETURN) {
+                break;
+            } else {
+                return -1;
+            }
+        }
+
+        return totalSent;
     }
 
-    int SecureSocket::receive(char *buffer, size_t size) {
+    ssize_t SecureSocket::receive(char *buffer, size_t size) {
         if (!ssl) return -1;
         return SSL_read(ssl, buffer, (int) (size));
     }

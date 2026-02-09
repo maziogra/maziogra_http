@@ -11,8 +11,8 @@ namespace maziogra_http {
         virtual bool create(int port) = 0;
         virtual void close() = 0;
         virtual std::unique_ptr<Socket> accept() = 0;
-        virtual int send(const char* data, size_t size) = 0;
-        virtual int receive(char* buffer, size_t size) = 0;
+        virtual ssize_t send(const char* data, size_t size) = 0;
+        virtual ssize_t receive(char* buffer, size_t size) = 0;
         int getSocket() const {
             return sock;
         }

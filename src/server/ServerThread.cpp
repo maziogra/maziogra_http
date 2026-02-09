@@ -21,8 +21,7 @@ namespace maziogra_http {
         int tv = 30000;
         ::setsockopt(sock->getSocket(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
         while (true) {
-            int bytes = sock->receive(buffer, std::size(buffer));
-            // check if the error is because of timeout
+            ssize_t bytes = sock->receive(buffer, std::size(buffer));
             if (bytes < 0) {
                 // if (errno == EAGAIN || errno == EWOULDBLOCK)
                 sock->close();
@@ -47,7 +46,11 @@ namespace maziogra_http {
                 response.setBody(ServerHTTP::getDefault404Message());
             }
             response.addHeader("Content-Length", std::to_string(std::size(response.getBody())));
-            sock->send(response.getRawResponse().c_str(), response.getRawResponse().size());
+            bytes = sock->send(response.getRawResponse().c_str(), response.getRawResponse().size());
+            if (bytes < 0) {
+                sock->close();
+                return;
+            }
             memset(buffer, 0, sizeof(buffer));
         }
     }

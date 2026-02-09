@@ -47,11 +47,21 @@ namespace maziogra_http {
     }
 
 
-    int BaseSocket::send(const char* data, size_t size) {
-        return ::send(sock, data, size, 0);
+    ssize_t BaseSocket::send(const char* data, size_t size) {
+        ssize_t totalSent = 0;
+
+        while (totalSent < size) {
+            ssize_t sent = ::send(sock, data+totalSent, size-totalSent, 0);
+            if (sent < 0) {
+                return -1;
+            }
+            totalSent += sent;
+        }
+
+        return totalSent;
     }
 
-    int BaseSocket::receive(char* buffer, size_t size) {
+    ssize_t BaseSocket::receive(char* buffer, size_t size) {
         return ::recv(sock, buffer, size, 0);
     }
 

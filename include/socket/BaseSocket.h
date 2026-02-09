@@ -16,8 +16,8 @@ namespace maziogra_http {
         bool create(int port) override;
         void close() override;
         std::unique_ptr<Socket> accept() override;
-        int send(const char* data, size_t size) override;
-        int receive(char* buffer, size_t size) override;
+        ssize_t send(const char* data, size_t size) override;
+        ssize_t receive(char* buffer, size_t size) override;
 
         BaseSocket(const BaseSocket&) = delete;
         BaseSocket& operator=(const BaseSocket&) = delete;
