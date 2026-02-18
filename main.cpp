@@ -4,7 +4,7 @@
 #include <server/ServerHTTP.h>
 
 int main() {
-    maziogra_http::ServerHTTP server(1);
+    maziogra_http::ServerHTTP server(0);
 
     server.addRoute("GET", "/home",
         [](maziogra_http::HttpRequest& req, maziogra_http::HttpResponse& res) {
@@ -12,5 +12,5 @@ int main() {
             res.setBody("<html><body><h1>Benvenuto su /home!</h1></body></html>");
         });
 
-    server.start(1984, "../cert.pem", "../key.pem");
+    server.start(1984);
 }

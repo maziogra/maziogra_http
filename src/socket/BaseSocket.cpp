@@ -62,7 +62,18 @@ namespace maziogra_http {
     }
 
     ssize_t BaseSocket::receive(char* buffer, size_t size) {
-        return ::recv(sock, buffer, size, 0);
+        while (true) {
+            ssize_t n = ::recv(sock, buffer, size, 0);
+
+            if (n >= 0)
+                return n;
+
+            if (errno == EINTR)
+                continue;
+
+            return -1;
+        }
     }
+
 
 }

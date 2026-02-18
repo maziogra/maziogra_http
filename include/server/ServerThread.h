@@ -12,10 +12,12 @@ namespace maziogra_http {
         std::unique_ptr<Socket> sock;
         std::map<std::string, Route> routes;
         std::vector<Middleware> middlewares;
+        std::string buffer;
         Route r;
 
         void run();
         void executePipeline(int index, HttpRequest& req, HttpResponse& res);
+        std::unique_ptr<HttpRequest> readRequest();
 
     public:
         ServerThread(
