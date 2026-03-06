@@ -1,6 +1,8 @@
+#include "server/types/RouteTypes.h"
 #include <iostream>
 #include <server/ServerHTTP.h>
 #include <server/ServerThread.h>
+#include <vector>
 
 namespace maziogra_http {
   std::string ServerHTTP::default404Message = "<h1>NOT FOUND</h1>";

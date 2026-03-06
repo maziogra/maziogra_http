@@ -10,6 +10,9 @@ namespace maziogra_http {
             line >> method >> path >> version;
         } else return;
 
+        if(path[0] != '/')
+          throw maziogra_http::InvalidPathException(); 
+
         while (std::getline(ss, l) && l != "\r" && !l.empty()) {
             if (l.back() == '\r') l.pop_back();
 

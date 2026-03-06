@@ -1,18 +1,10 @@
-#ifndef SERVERHTTP_H
-#define SERVERHTTP_H
-#include <functional>
+#pragma once
 #include <socket/Socket.h>
 #include <socket/BaseSocket.h>
-#include <map>
-#include <vector>
-#include <server/HttpRequest.h>
-#include <server/HttpResponse.h>
-
-#include "socket/SecureSocket.h"
+#include <server/types/RouteTypes.h>
+#include <socket/SecureSocket.h>
 
 namespace maziogra_http {
-    using Route = std::function<void(HttpRequest& request, HttpResponse& response)>;
-    using Middleware = std::function<void(HttpRequest& request, HttpResponse& response, std::function<void()> callback)>;
     class ServerHTTP {
     protected:
         static std::string default404Message;
@@ -44,6 +36,3 @@ namespace maziogra_http {
         static std::string getDefault404Message() {return default404Message;}
     };
 }
-
-
-#endif //SERVERHTTP_H

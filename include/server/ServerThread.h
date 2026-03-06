@@ -1,10 +1,10 @@
-#ifndef SERVERTHREAD_H
-#define SERVERTHREAD_H
+#pragma once
+#include "server/types/RouteTypes.h"
 #include <map>
 #include <thread>
 #include <socket/Socket.h>
+#include <vector>
 
-#include <server/ServerHTTP.h>
 
 namespace maziogra_http {
     class ServerThread {
@@ -33,6 +33,3 @@ namespace maziogra_http {
         ServerThread& operator=(const ServerThread&) = delete;
     };
 }
-
-
-#endif

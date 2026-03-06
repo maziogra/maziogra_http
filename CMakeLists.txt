@@ -12,17 +12,21 @@ add_executable(maziogra_http
     src/server/ServerHTTP.cpp
     src/server/HttpRequest.cpp
     src/server/ServerThread.cpp
-        include/socket/SecureSocket.h
-        src/socket/SecureSocket.cpp
+    src/socket/SecureSocket.cpp
+    src/server/routes/Router.cpp
 )
 
 target_sources(maziogra_http PRIVATE
     include/socket/Socket.h
+    include/socket/SecureSocket.h
     include/socket/BaseSocket.h
     include/server/ServerHTTP.h
     include/server/HttpRequest.h
     include/server/HttpResponse.h
     include/server/ServerThread.h
+    include/Server/types/RouteTypes.h
+    include/server/routes/Router.h
+    include/server/routes/RouteTree.h
 )
 
 find_package(OpenSSL REQUIRED)

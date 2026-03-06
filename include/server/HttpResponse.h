@@ -1,5 +1,4 @@
-#ifndef HTTPRESPONSE_H
-#define HTTPRESPONSE_H
+#pragma once
 #include <map>
 #include <string>
 
@@ -96,5 +95,3 @@ namespace maziogra_http {
         }
     };
 }
-
-#endif //HTTPRESPONSE_H

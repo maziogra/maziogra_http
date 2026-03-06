@@ -33,6 +33,9 @@ elif [ "$1" == "-bs" ]; then
     build_project
     start_project
 else
-    echo "Uso: $0 -build | -start"
+    echo "Uso: $0 -b | -s | -bs"
+    echo "-b -> build"
+    echo "-s -> start"
+    echo "-bs -> build and start"
     exit 1
 fi
