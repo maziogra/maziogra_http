@@ -1,13 +1,18 @@
 #include <socket/SecureSocket.h>
 #include <socket/BaseSocket.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <socket/Socket.h>
 #include <memory>
-#include <unistd.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+
+#if _WIN32
+#include <winsock2.h>
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#endif
 
 namespace maziogra_http {
     static bool ssl_initialized = false;
@@ -29,7 +34,11 @@ namespace maziogra_http {
         }
 
         if (sock != -1) {
+#if _WIN32
+			::closesocket(sock);
+#else
             ::close(sock);
+#endif
             sock = -1;
         }
 
@@ -69,19 +78,30 @@ namespace maziogra_http {
 
         sock = ::socket(AF_INET, SOCK_STREAM, 0);
 
+#if _WIN32
+		if (sock == INVALID_SOCKET) return false;
+#else
         if (sock == -1) return false;
-
+#endif
         sockaddr_in sockAddr{};
         sockAddr.sin_family = AF_INET;
         sockAddr.sin_port = htons(port);
         sockAddr.sin_addr.s_addr = INADDR_ANY;
 
+#if _WIN32
+		if (::bind(sock, (sockaddr*)&sockAddr, sizeof(sockAddr)) == SOCKET_ERROR) {
+#else
         if (::bind(sock, (sockaddr *) &sockAddr, sizeof(sockAddr)) < 0) {
+#endif
             close();
             return false;
         }
 
+#if _WIN32
+		if (::listen(sock, SOMAXCONN) == SOCKET_ERROR) {
+#else
         if (::listen(sock, SOMAXCONN) < 0) {
+#endif
             close();
             return false;
         }
@@ -90,8 +110,18 @@ namespace maziogra_http {
     }
 
     std::unique_ptr<Socket> SecureSocket::accept() {
-        int clientSocket = ::accept(sock, nullptr, nullptr);
+#if _WIN32
+		SOCKET clientSocket = INVALID_SOCKET;
+#else
+		int clientSocket = -1;
+#endif
+        
+        clientSocket = ::accept(sock, nullptr, nullptr);
+#if _WIN32
+		if clientSocket == INVALID_SOCKET) return nullptr;
+#else
         if (clientSocket == -1) return nullptr;
+#endif
 
         auto client = std::make_unique<SecureSocket>();
         client->sock = clientSocket;
@@ -100,7 +130,11 @@ namespace maziogra_http {
 
         client->ssl = SSL_new(ctx);
         if (!client->ssl) {
+#if _WIN32
+            ::closesocket(clientSocket);
+#else
             ::close(clientSocket);
+#endif
             return nullptr;
         }
 
@@ -108,7 +142,11 @@ namespace maziogra_http {
 
         if (SSL_accept(client->ssl) <= 0) {
             ERR_print_errors_fp(stderr);
+#if _WIN32
+			::closesocket(clientSocket);
+#else
             ::close(clientSocket);
+#endif
             client->ssl = nullptr;
             return nullptr;
         }
@@ -116,13 +154,13 @@ namespace maziogra_http {
         return client;
     }
 
-    ssize_t SecureSocket::send(const char *data, size_t size) {
+    std::ptrdiff_t SecureSocket::send(const char *data, size_t size) {
         if (!ssl) return -1;
 
-        ssize_t totalSent = 0;
+        std::ptrdiff_t totalSent = 0;
 
         while (totalSent < size) {
-            ssize_t n = SSL_write(ssl, data + totalSent, static_cast<int>(size - totalSent));
+            std::ptrdiff_t n = SSL_write(ssl, data + totalSent, static_cast<int>(size - totalSent));
             if (n > 0) {
                 totalSent += n;
                 continue;
@@ -141,7 +179,7 @@ namespace maziogra_http {
         return totalSent;
     }
 
-    ssize_t SecureSocket::receive(char* buffer, size_t size) {
+    std::ptrdiff_t SecureSocket::receive(char* buffer, size_t size) {
         if (!ssl) return -1;
 
         while (true) {

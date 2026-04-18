@@ -21,8 +21,8 @@ namespace maziogra_http {
         void close() override;
         std::unique_ptr<Socket> accept() override;
 
-        ssize_t send(const char* data, size_t size) override;
-        ssize_t receive(char* buffer, size_t size) override;
+        std::ptrdiff_t send(const char* data, size_t size) override;
+        std::ptrdiff_t receive(char* buffer, size_t size) override;
 
         SecureSocket(const SecureSocket&) = delete;
         SecureSocket& operator=(const SecureSocket&) = delete;

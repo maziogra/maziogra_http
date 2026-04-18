@@ -1,4 +1,10 @@
 /build
+/out
+/vcpkg_installed
 /.cache
 /.cmake
 /cmake-build-debug
+build.ninja
+cmake_install.cmake
+/.vs
+CmakeSettings.json

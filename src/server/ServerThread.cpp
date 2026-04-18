@@ -1,10 +1,15 @@
-#include "server/HttpRequest.h"
+#include <server/HttpRequest.h>
 #include <cstring>
 #include <iostream>
 #include <map>
 #include <server/ServerHTTP.h>
 #include <server/ServerThread.h>
+#if _WIN32
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
+#endif
+
 
 namespace maziogra_http {
 void ServerThread::executePipeline(int index, HttpRequest &req,
@@ -24,7 +29,7 @@ std::unique_ptr<HttpRequest> ServerThread::readRequest() {
 
   while ((headerEnd = buffer.find("\r\n\r\n")) == std::string::npos) {
 
-    ssize_t n = sock->receive(tmp, sizeof(tmp));
+    std::ptrdiff_t n = sock->receive(tmp, sizeof(tmp));
     if (n <= 0)
       return nullptr;
 
@@ -32,7 +37,7 @@ std::unique_ptr<HttpRequest> ServerThread::readRequest() {
   }
 
   size_t contentLength = 0;
-
+  
   // parse SOLO header
   HttpRequest headerOnly(buffer.substr(0, headerEnd + 4));
 
@@ -51,7 +56,7 @@ std::unique_ptr<HttpRequest> ServerThread::readRequest() {
 
   while (buffer.size() < totalSize) {
 
-    ssize_t n = sock->receive(tmp, sizeof(tmp));
+    std::ptrdiff_t n = sock->receive(tmp, sizeof(tmp));
     if (n <= 0)
       return nullptr;
 
@@ -99,7 +104,7 @@ void ServerThread::run() {
       }
       response.addHeader("Content-Length",
                          std::to_string(std::size(response.getBody())));
-      ssize_t bytes = sock->send(response.getRawResponse().c_str(),
+      std::ptrdiff_t bytes = sock->send(response.getRawResponse().c_str(),
                                  response.getRawResponse().size());
       if (bytes < 0) {
         sock->close();

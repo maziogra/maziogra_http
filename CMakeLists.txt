@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(maziogra_http VERSION 1.0 LANGUAGES CXX)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -14,27 +13,20 @@ add_executable(maziogra_http
     src/server/ServerThread.cpp
     src/socket/SecureSocket.cpp
     src/server/routes/Router.cpp
+    )
+
+target_include_directories(maziogra_http PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
 )
 
-target_sources(maziogra_http PRIVATE
-    include/socket/Socket.h
-    include/socket/SecureSocket.h
-    include/socket/BaseSocket.h
-    include/server/ServerHTTP.h
-    include/server/HttpRequest.h
-    include/server/HttpResponse.h
-    include/server/ServerThread.h
-    include/Server/types/RouteTypes.h
-    include/server/routes/Router.h
-    include/server/routes/RouteTree.h
-)
+if (WIN32)
+    target_link_libraries(maziogra_http PRIVATE ws2_32)
+    target_compile_definitions(maziogra_http PRIVATE WIN32_LEAN_AND_MEAN)
+endif()
 
 find_package(OpenSSL REQUIRED)
 
-if(OpenSSL_FOUND)
-    target_include_directories(maziogra_http PRIVATE ${OPENSSL_INCLUDE_DIR})
-    target_link_libraries(maziogra_http PRIVATE OpenSSL::SSL OpenSSL::Crypto)
-else()
-    message(FATAL_ERROR "OpenSSL non trovato")
-endif()
-
+target_link_libraries(maziogra_http PRIVATE
+    OpenSSL::SSL
+    OpenSSL::Crypto
+)

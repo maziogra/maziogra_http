@@ -1,9 +1,11 @@
 #include <iostream>
+#include <utils/NetInit.h>
 #include <socket/BaseSocket.h>
 #include <server/HttpRequest.h>
 #include <server/ServerHTTP.h>
 
 int main() {
+    NetInit netInit;
     maziogra_http::ServerHTTP server(0);
 
     server.addRoute("GET", "/home",

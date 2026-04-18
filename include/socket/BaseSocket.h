@@ -1,8 +1,5 @@
+#pragma once
 #include <socket/Socket.h>
-
-#ifndef BASESOCKET_H
-#define BASESOCKET_H
-
 
 namespace maziogra_http {
     class BaseSocket : public Socket {
@@ -16,8 +13,8 @@ namespace maziogra_http {
         bool create(int port) override;
         void close() override;
         std::unique_ptr<Socket> accept() override;
-        ssize_t send(const char* data, size_t size) override;
-        ssize_t receive(char* buffer, size_t size) override;
+        std::ptrdiff_t send(const char* data, size_t size) override;
+        std::ptrdiff_t receive(char* buffer, size_t size) override;
 
         BaseSocket(const BaseSocket&) = delete;
         BaseSocket& operator=(const BaseSocket&) = delete;
@@ -26,5 +23,3 @@ namespace maziogra_http {
     };
 
 }
-
-#endif
