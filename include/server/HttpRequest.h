@@ -4,55 +4,38 @@
 #include <string>
 
 namespace maziogra_http {
-struct InvalidPathException : public std::runtime_error {
-  InvalidPathException()
-      : std::runtime_error("Invalid path: does not start with '/'") {}
-};
 
-class HttpRequest {
-protected:
-  std::string method;
-  std::string version;
-  std::string path;
-  std::map<std::string, std::string> headers;
-  std::string body;
-  void parseRequest(std::string rawRequest);
+    class HttpRequest {
+    private:
+        std::string method;
+        std::string version;
+        std::string path;
+        std::map<std::string, std::string> headers;
+        std::string body;
 
-public:
-  HttpRequest();
-  HttpRequest(std::string rawRequest) { parseRequest(std::move(rawRequest)); }
+    public:
+        HttpRequest() = default;
 
-  void addHeader(const std::string &key, const std::string &value) {
-    headers[key] = value;
-  }
+        const std::string& getMethod() const { return method; }
+        const std::string& getVersion() const { return version; }
+        const std::string& getPath() const { return path; }
+        const std::string& getBody() const { return body; }
 
-  void removeHeader(const std::string &key) {
-    auto it = headers.find(key);
-    if (it != headers.end()) {
-      headers.erase(it);
-    }
-  }
+        const std::map<std::string, std::string>& getHeaders() const {
+            return headers;
+        }
 
-  std::string getMethod() const { return method; }
+        void setMethod(const std::string& method) { this->method = method; }
+        void setVersion(const std::string& version) { this->version = version; }
+        void setPath(const std::string& path) { this->path = path; }
+        void setBody(const std::string& body) { this->body = body; }
 
-  void setMethod(std::string method) { this->method = std::move(method); }
+        void addHeader(const std::string& key, const std::string& value) {
+            headers[key] = value;
+        }
 
-  std::string getVersion() const { return version; }
-
-  void setVersion(std::string version) { this->version = std::move(version); }
-
-  std::string getPath() const { return path; }
-
-  void setPath(std::string path) { this->path = std::move(path); }
-
-  std::map<std::string, std::string> getHeaders() const { return headers; }
-
-  void setHeaders(std::map<std::string, std::string> headers) {
-    this->headers = std::move(headers);
-  }
-
-  std::string getBody() const { return body; }
-
-  void setBody(std::string body) { this->body = std::move(body); }
-};
+        void removeHeader(const std::string& key) {
+            headers.erase(key);
+        }
+    };
 } // namespace maziogra_http

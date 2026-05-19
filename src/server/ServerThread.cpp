@@ -4,6 +4,7 @@
 #include <map>
 #include <server/ServerHTTP.h>
 #include <server/ServerThread.h>
+#include <server/HttpRequestParser.h>
 #if _WIN32
 #include <winsock2.h>
 #else
@@ -23,51 +24,62 @@ void ServerThread::executePipeline(int index, HttpRequest &req,
 }
 
 std::unique_ptr<HttpRequest> ServerThread::readRequest() {
-  char tmp[4096];
+    HttpRequestParser parser;
 
-  size_t headerEnd;
+    char tmp[4096];
 
-  while ((headerEnd = buffer.find("\r\n\r\n")) == std::string::npos) {
+    size_t headerEnd;
 
-    std::ptrdiff_t n = sock->receive(tmp, sizeof(tmp));
-    if (n <= 0)
-      return nullptr;
+    while ((headerEnd = buffer.find("\r\n\r\n")) == std::string::npos) {
 
-    buffer.append(tmp, n);
-  }
+        std::ptrdiff_t n = sock->receive(tmp, sizeof(tmp));
 
-  size_t contentLength = 0;
-  
-  // parse SOLO header
-  HttpRequest headerOnly(buffer.substr(0, headerEnd + 4));
+        if (n <= 0)
+            return nullptr;
 
-  auto headers = headerOnly.getHeaders();
-  auto it = headers.find("Content-Length");
-
-  if (it != headers.end()) {
-    try {
-      contentLength = std::stoul(it->second);
-    } catch (...) {
-      return nullptr;
+        buffer.append(tmp, n);
     }
-  }
 
-  size_t totalSize = headerEnd + 4 + contentLength;
+    HttpRequest headerOnly;
 
-  while (buffer.size() < totalSize) {
+    parser.parse(buffer.substr(0, headerEnd + 4), headerOnly);
 
-    std::ptrdiff_t n = sock->receive(tmp, sizeof(tmp));
-    if (n <= 0)
-      return nullptr;
+    size_t contentLength = 0;
 
-    buffer.append(tmp, n);
-  }
+    auto headers = headerOnly.getHeaders();
 
-  auto request = std::make_unique<HttpRequest>(buffer.substr(0, totalSize));
+    auto it = headers.find("Content-Length");
 
-  buffer.erase(0, totalSize);
+    if (it != headers.end()) {
+        try {
+            contentLength = std::stoul(it->second);
+        }
+        catch (...) {
+            return nullptr;
+        }
+    }
 
-  return request;
+
+    size_t totalSize = headerEnd + 4 + contentLength;
+
+    while (buffer.size() < totalSize) {
+
+        std::ptrdiff_t n = sock->receive(tmp, sizeof(tmp));
+
+        if (n <= 0)
+            return nullptr;
+
+        buffer.append(tmp, n);
+    }
+
+
+    auto request = std::make_unique<HttpRequest>();
+
+    parser.parse(buffer.substr(0, totalSize), *request);
+
+    buffer.erase(0, totalSize);
+
+    return request;
 }
 
 void ServerThread::run() {
@@ -86,13 +98,6 @@ void ServerThread::run() {
 
       HttpRequest &request = *requestPtr;
 
-      if (request.getHeaders().contains("Connection")) {
-        if (request.getHeaders()["Connection"] == "close") {
-          sock->close();
-          return;
-        }
-      }
-
       HttpResponse response;
       std::string key = request.getMethod() + ":" + request.getPath();
       if (routes.contains(key)) {
@@ -106,15 +111,20 @@ void ServerThread::run() {
                          std::to_string(std::size(response.getBody())));
       std::ptrdiff_t bytes = sock->send(response.getRawResponse().c_str(),
                                  response.getRawResponse().size());
+
+      auto& headers = request.getHeaders();
+      auto it = headers.find("Connection");
+
+      if ((it != headers.end() && it->second == "close") || (it == headers.end() && request.getVersion() == "HTTP/1.0")) {
+          sock->close();
+          return;
+      }
+
       if (bytes < 0) {
         sock->close();
         return;
       }
       memset(buffer, 0, sizeof(buffer));
-    } catch (const maziogra_http::InvalidPathException &e) {
-      std::cerr << "Invalid path, closing connection: " << e.what() << "\n";
-      sock->close();
-      return;
     } catch (...) {
       std::cerr << "Unknown error, closing connection\n";
       sock->close();

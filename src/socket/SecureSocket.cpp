@@ -118,7 +118,7 @@ namespace maziogra_http {
         
         clientSocket = ::accept(sock, nullptr, nullptr);
 #if _WIN32
-		if clientSocket == INVALID_SOCKET) return nullptr;
+		if (clientSocket == INVALID_SOCKET) return nullptr;
 #else
         if (clientSocket == -1) return nullptr;
 #endif

@@ -5,28 +5,47 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(maziogra_http
-    main.cpp
+
+add_library(maziogra_core
     src/socket/BaseSocket.cpp
     src/server/ServerHTTP.cpp
-    src/server/HttpRequest.cpp
+    
     src/server/ServerThread.cpp
     src/socket/SecureSocket.cpp
     src/server/routes/Router.cpp
-    )
+ "src/server/HttpRequestParser.cpp")
 
-target_include_directories(maziogra_http PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
+target_include_directories(maziogra_core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-
-if (WIN32)
-    target_link_libraries(maziogra_http PRIVATE ws2_32)
-    target_compile_definitions(maziogra_http PRIVATE WIN32_LEAN_AND_MEAN)
-endif()
 
 find_package(OpenSSL REQUIRED)
 
-target_link_libraries(maziogra_http PRIVATE
+target_link_libraries(maziogra_core PUBLIC
     OpenSSL::SSL
     OpenSSL::Crypto
 )
+
+if (WIN32)
+    target_link_libraries(maziogra_core PUBLIC ws2_32)
+endif()
+
+add_executable(maziogra_http main.cpp)
+
+target_link_libraries(maziogra_http PRIVATE maziogra_core)
+
+add_executable(maziogra_tests
+    tests/test_parser.cpp
+)
+
+find_package(Catch2 CONFIG REQUIRED)
+
+target_link_libraries(maziogra_tests PRIVATE
+    maziogra_core
+    Catch2::Catch2WithMain
+)
+
+enable_testing()
+include(CTest)
+include(Catch)
+catch_discover_tests(maziogra_tests)
