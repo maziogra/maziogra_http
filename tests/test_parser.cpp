@@ -83,7 +83,6 @@ TEST_CASE("Duplicate headers")
 
     auto headers = req.getHeaders();
 
-    // dipende da come lo implementi:
     REQUIRE(headers.at("X-Test") == "two");
 }
 

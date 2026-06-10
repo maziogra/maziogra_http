@@ -36,7 +36,7 @@ target_link_libraries(maziogra_http PRIVATE maziogra_core)
 
 add_executable(maziogra_tests
     tests/test_parser.cpp
-)
+ "tests/test_request.cpp")
 
 find_package(Catch2 CONFIG REQUIRED)
 

@@ -2,6 +2,8 @@
 #include <WinSock2.h>
 #endif
 
+#include <iostream>
+
 class NetInit {
 public:
     NetInit() {
