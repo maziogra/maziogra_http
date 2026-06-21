@@ -18,7 +18,7 @@ private:
 public:
   RouteTree() : paramName("") {}
 
-  Route &getHandler() { return handler; }
+  Route* getHandler() { return &handler; }
   void setHandler(Route h) { handler = std::move(h); }
 
   RouteTree *getParamChild() { return param.get(); }

@@ -2,107 +2,120 @@
 #include <server/routes/Router.h>
 
 namespace maziogra_http {
-void Router::insertRoute(std::string path, Route handler) {
-	if (path.empty() || path[0] != '/') {
-		throw std::invalid_argument("Path must start with '/'");
+	void Router::insertRoute(std::string path, Route handler) {
+		if (path.empty() || path[0] != '/')
+			throw std::invalid_argument("Path must start with '/'");
+
+		auto segments = splitPath(path);
+		if (!segments) return;
+
+		RouteTree* current = &routes;
+
+		for (const auto& seg : *segments) {
+
+			if (seg.at(0) == ':') {
+				auto* next = current->getParamChild();
+
+				if (!next) {
+					auto node = std::make_unique<RouteTree>();
+					next = node.get();
+					current->setParamChild(seg.substr(1), std::move(node));
+				}
+
+				current = next;
+			}
+			else {
+				auto* next = current->getStaticChild(seg);
+
+				if (!next) {
+					auto node = std::make_unique<RouteTree>();
+					next = node.get();
+					current->addStaticChild(seg, std::move(node));
+				}
+
+				current = next;
+			}
+		}
+
+		current->setHandler(handler);
 	}
-	else if (canInsert(path)) {
-        auto segments = this->splitPath(path);
+
+	bool Router::canInsert(const std::string &path) {
+		auto segments = this->splitPath(path);
 		if (segments.has_value()) {
 			RouteTree* current = &routes;
 			for (const auto& seg : segments.value()) {
 				if (seg.at(0) == ':') {
-					auto prevParamChild = current;
 					current = current->getParamChild();
-					if (!current) {
-						auto newNode = std::make_unique<RouteTree>();
-						current = newNode.get();
-						prevParamChild->setParamChild(seg.substr(1), std::move(newNode));
-					}
 				}
 				else {
-					auto prevStaticChild = current;
 					current = current->getStaticChild(seg);
-					if (!current) {
-						auto newNode = std::make_unique<RouteTree>();
-						current = newNode.get();
-						prevStaticChild->addStaticChild(seg, std::move(newNode));
-					}
 				}
+				if (!current) return false;
 			}
+			return true;
 		}
 	}
-}
 
-bool Router::canInsert(const std::string &path) {
-	auto segments = this->splitPath(path);
-	if (segments.has_value()) {
+	MatchResult Router::match(const std::string& path) {
+		MatchResult result;
+		result.found = false;
+
+		auto segments = splitPath(path);
+		if (!segments) return result;
+
 		RouteTree* current = &routes;
-		for (const auto& seg : segments.value()) {
-			if (seg.at(0) == ':') {
-				current = current->getParamChild();
+
+		for (const auto& seg : *segments) {
+
+			RouteTree* next = current->getStaticChild(seg);
+
+			if (next) {
+				current = next;
+				continue;
 			}
-			else {
-				current = current->getStaticChild(seg);
-			}
-			if (!current) return false;
+
+			next = current->getParamChild();
+			if (!next) return result;
+
+			std::string paramName = next->getParamName();
+			result.params[paramName] = seg;
+
+			current = next;
 		}
-		return true;
+
+		result.handler = current->getHandler();
+
+		if (!result.handler) {
+			result.found = false;
+			return result;
+		}
+		result.found = true;
+
+		return result;
 	}
-}
 
-MatchResult Router::match(const std::string& path) {
-    MatchResult result;
-    result.found = false;
+	std::optional<std::vector<std::string>> Router::splitPath(const std::string &path) {
+	  std::vector<std::string> segments;
 
-    auto segments = splitPath(path);
-    if (!segments) return result;
+	  if (path.empty() || path[0] != '/')
+		return std::nullopt;
 
-    RouteTree* current = &routes;
+	  int start = 1;
+	  int pos;
 
-    for (const auto& seg : *segments) {
+	  while ((pos = path.find('/', start)) != std::string::npos) {
+		if (pos > start) {
+		  segments.emplace_back(path.substr(start, pos - start));
+		}
+		start = pos + 1;
+	  }
 
-        RouteTree* next = current->getStaticChild(seg);
+	  if (start < path.size()) {
+		segments.emplace_back(path.substr(start));
+	  }
 
-        if (next) {
-            current = next;
-            continue;
-        }
-
-        next = current->getParamChild();
-        if (!next) return result;
-
-        std::string paramName = next->getParamName();
-        result.params[paramName] = seg;
-
-        current = next;
-    }
-
-    result.found = true;
-    return result;
-}
-
-std::optional<std::vector<std::string>> Router::splitPath(const std::string &path) {
-  std::vector<std::string> segments;
-
-  if (path.empty() || path[0] != '/')
-    return std::nullopt;
-
-  int start = 1;
-  int pos;
-
-  while ((pos = path.find('/', start)) != std::string::npos) {
-    if (pos > start) {
-      segments.emplace_back(path.substr(start, pos - start));
-    }
-    start = pos + 1;
-  }
-
-  if (start < path.size()) {
-    segments.emplace_back(path.substr(start));
-  }
-
-  return segments;
-}
+	  return segments;
+	}
 
 } // namespace maziogra_http

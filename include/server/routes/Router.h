@@ -7,6 +7,7 @@ namespace maziogra_http {
 struct MatchResult {
     bool found;
     std::unordered_map<std::string, std::string> params;
+    Route* handler = nullptr;
 };
 
 class Router {
