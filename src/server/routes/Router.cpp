@@ -2,7 +2,37 @@
 #include <server/routes/Router.h>
 
 namespace maziogra_http {
-// void Router::insertRoute(std::string path, Route handler) {}
+void Router::insertRoute(std::string path, Route handler) {
+	if (path.empty() || path[0] != '/') {
+		throw std::invalid_argument("Path must start with '/'");
+	}
+	else if (canInsert(path)) {
+        auto segments = this->splitPath(path);
+		if (segments.has_value()) {
+			RouteTree* current = &routes;
+			for (const auto& seg : segments.value()) {
+				if (seg.at(0) == ':') {
+					auto prevParamChild = current;
+					current = current->getParamChild();
+					if (!current) {
+						auto newNode = std::make_unique<RouteTree>();
+						current = newNode.get();
+						prevParamChild->setParamChild(seg.substr(1), std::move(newNode));
+					}
+				}
+				else {
+					auto prevStaticChild = current;
+					current = current->getStaticChild(seg);
+					if (!current) {
+						auto newNode = std::make_unique<RouteTree>();
+						current = newNode.get();
+						prevStaticChild->addStaticChild(seg, std::move(newNode));
+					}
+				}
+			}
+		}
+	}
+}
 
 bool Router::canInsert(const std::string &path) {
 	auto segments = this->splitPath(path);
