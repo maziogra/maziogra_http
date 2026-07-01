@@ -13,13 +13,18 @@ private:
   std::string paramName;
   std::unique_ptr<RouteTree> param;
 
-  Route handler;
+  std::unordered_map<std::string, Route> handlers;
 
 public:
   RouteTree() : paramName("") {}
 
-  Route* getHandler() { return &handler; }
-  void setHandler(Route h) { handler = std::move(h); }
+  Route* getHandler(const std::string& method) {
+      auto it = handlers.find(method);
+      if (it == handlers.end())
+          return nullptr;
+      return &it->second;
+  }
+  void setHandler(std::string method, Route h) { handlers[method] = std::move(h); }
 
   RouteTree *getParamChild() { return param.get(); }
 

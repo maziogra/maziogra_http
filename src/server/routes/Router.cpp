@@ -2,7 +2,7 @@
 #include <server/routes/Router.h>
 
 namespace maziogra_http {
-	void Router::insertRoute(std::string path, Route handler) {
+	void Router::insertRoute(std::string method, std::string path, Route handler) {
 		if (path.empty() || path[0] != '/')
 			throw std::invalid_argument("Path must start with '/'");
 
@@ -13,10 +13,16 @@ namespace maziogra_http {
 
 		for (const auto& seg : *segments) {
 
-			if (seg.at(0) == ':') {
+			if (!seg.empty() && seg[0] == ':') {
+
 				auto* next = current->getParamChild();
 
-				if (!next) {
+				if (next) {
+					if (current->getParamName() != seg.substr(1)) {
+						throw std::runtime_error("Conflicting param route at same level");
+					}
+				}
+				else {
 					auto node = std::make_unique<RouteTree>();
 					next = node.get();
 					current->setParamChild(seg.substr(1), std::move(node));
@@ -37,29 +43,39 @@ namespace maziogra_http {
 			}
 		}
 
-		current->setHandler(handler);
+		current->setHandler(method, std::move(handler));
 	}
 
-	bool Router::canInsert(const std::string &path) {
-		auto segments = this->splitPath(path);
-		if (segments.has_value()) {
-			RouteTree* current = &routes;
-			for (const auto& seg : segments.value()) {
-				if (seg.at(0) == ':') {
-					current = current->getParamChild();
+	bool Router::canInsert(const std::string& path) {
+		auto segments = splitPath(path);
+		if (!segments) return false;
+
+		RouteTree* current = &routes;
+
+		for (const auto& seg : *segments) {
+
+			if (!seg.empty() && seg[0] == ':') {
+
+				if (current->getParamChild()) {
+					if (current->getParamName() != seg.substr(1))
+						return false;
 				}
-				else {
-					current = current->getStaticChild(seg);
-				}
-				if (!current) return false;
+
+				current = current->getParamChild();
 			}
-			return true;
+			else {
+				current = current->getStaticChild(seg);
+			}
+
+			if (!current)
+				return false;
 		}
+
+		return true;
 	}
 
-	MatchResult Router::match(const std::string& path) {
+	MatchResult Router::match(const std::string& method, const std::string& path) {
 		MatchResult result;
-		result.found = false;
 
 		auto segments = splitPath(path);
 		if (!segments) return result;
@@ -68,54 +84,51 @@ namespace maziogra_http {
 
 		for (const auto& seg : *segments) {
 
-			RouteTree* next = current->getStaticChild(seg);
-
-			if (next) {
+			if (auto* next = current->getStaticChild(seg)) {
 				current = next;
 				continue;
 			}
 
-			next = current->getParamChild();
-			if (!next) return result;
+			auto* paramNode = current->getParamChild();
+			if (!paramNode)
+				return result;
 
-			std::string paramName = next->getParamName();
-			result.params[paramName] = seg;
-
-			current = next;
+			result.params[paramNode->getParamName()] = seg;
+			current = paramNode;
 		}
 
-		result.handler = current->getHandler();
-
-		if (!result.handler) {
-			result.found = false;
-			return result;
+		if (auto* h = current->getHandler(method)) {
+			result.handler = h;
+			result.found = true;
 		}
-		result.found = true;
 
 		return result;
 	}
 
-	std::optional<std::vector<std::string>> Router::splitPath(const std::string &path) {
-	  std::vector<std::string> segments;
+	std::optional<std::vector<std::string>> Router::splitPath(const std::string& path) {
+		if (path.empty() || path[0] != '/')
+			return std::nullopt;
 
-	  if (path.empty() || path[0] != '/')
-		return std::nullopt;
+		std::vector<std::string> segments;
 
-	  int start = 1;
-	  int pos;
+		size_t start = 1;
 
-	  while ((pos = path.find('/', start)) != std::string::npos) {
-		if (pos > start) {
-		  segments.emplace_back(path.substr(start, pos - start));
+		while (true) {
+			size_t pos = path.find('/', start);
+
+			if (pos == std::string::npos) {
+				if (start < path.size())
+					segments.push_back(path.substr(start));
+				break;
+			}
+
+			if (pos > start)
+				segments.push_back(path.substr(start, pos - start));
+
+			start = pos + 1;
 		}
-		start = pos + 1;
-	  }
 
-	  if (start < path.size()) {
-		segments.emplace_back(path.substr(start));
-	  }
-
-	  return segments;
+		return segments;
 	}
 
 } // namespace maziogra_http

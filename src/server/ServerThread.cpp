@@ -83,53 +83,70 @@ std::unique_ptr<HttpRequest> ServerThread::readRequest() {
 }
 
 void ServerThread::run() {
-  char buffer[1024];
-  int tv = 30000;
-  ::setsockopt(sock->getSocket(), SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv,
-               sizeof(tv));
-  while (true) {
-    try {
-      auto requestPtr = readRequest();
+    int tv = 30000;
 
-      if (!requestPtr) {
-        sock->close();
-        return;
-      }
+    ::setsockopt(sock->getSocket(), SOL_SOCKET, SO_RCVTIMEO,
+        (const char*)&tv, sizeof(tv));
 
-      HttpRequest &request = *requestPtr;
+    while (true) {
+        try {
+            auto requestPtr = readRequest();
 
-      HttpResponse response;
-      std::string key = request.getMethod() + ":" + request.getPath();
-      if (routes.contains(key)) {
-        r = routes[key];
-        executePipeline(0, request, response);
-      } else {
-        response.setStatusCode(404);
-        response.setBody(ServerHTTP::getDefault404Message());
-      }
-      response.addHeader("Content-Length",
-                         std::to_string(std::size(response.getBody())));
-      std::ptrdiff_t bytes = sock->send(response.getRawResponse().c_str(),
-                                 response.getRawResponse().size());
+            if (!requestPtr) {
+                sock->close();
+                return;
+            }
 
-      auto& headers = request.getHeaders();
-      auto it = headers.find("Connection");
+            HttpRequest& request = *requestPtr;
+            HttpResponse response;
 
-      if ((it != headers.end() && it->second == "close") || (it == headers.end() && request.getVersion() == "HTTP/1.0")) {
-          sock->close();
-          return;
-      }
+            auto result = router.match(request.getMethod(), request.getPath());
 
-      if (bytes < 0) {
-        sock->close();
-        return;
-      }
-      memset(buffer, 0, sizeof(buffer));
-    } catch (...) {
-      std::cerr << "Unknown error, closing connection\n";
-      sock->close();
-      return;
+            if (result.found && result.handler) {
+
+                request.setParams(std::move(result.params));
+
+                r = *result.handler;
+                executePipeline(0, request, response);
+
+            }
+            else {
+                response.setStatusCode(404);
+                response.setBody(ServerHTTP::getDefault404Message());
+            }
+
+            response.addHeader(
+                "Content-Length",
+                std::to_string(response.getBody().size())
+            );
+
+            std::ptrdiff_t bytes = sock->send(
+                response.getRawResponse().c_str(),
+                response.getRawResponse().size()
+            );
+
+            if (bytes < 0) {
+                sock->close();
+                return;
+            }
+
+            auto& headers = request.getHeaders();
+            auto it = headers.find("Connection");
+
+            if ((it != headers.end() && it->second == "close") ||
+                (it == headers.end() && request.getVersion() == "HTTP/1.0")) {
+                sock->close();
+                return;
+            }
+
+            buffer.clear();
+
+        }
+        catch (...) {
+            std::cerr << "Unknown error, closing connection\n";
+            sock->close();
+            return;
+        }
     }
-  }
 }
 } // namespace maziogra_http

@@ -2,11 +2,13 @@
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 namespace maziogra_http {
 
     class HttpRequest {
     private:
+        std::unordered_map<std::string, std::string> params;
         std::string method;
         std::string version;
         std::string path;
@@ -36,6 +38,14 @@ namespace maziogra_http {
 
         void removeHeader(const std::string& key) {
             headers.erase(key);
+        }
+
+        const std::unordered_map<std::string, std::string>& getParams() const {
+            return params;
+        }
+
+        void setParams(std::unordered_map<std::string, std::string> params) {
+            this->params = std::move(params);
         }
     };
 } // namespace maziogra_http

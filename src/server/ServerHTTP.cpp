@@ -1,68 +1,90 @@
-#include <server/types/RouteTypes.h>
 #include <iostream>
-#include <server/ServerHTTP.h>
-#include <server/ServerThread.h>
+#include <memory>
 #include <vector>
 
+#include <server/ServerHTTP.h>
+#include <server/ServerThread.h>
+
 namespace maziogra_http {
-  std::string ServerHTTP::default404Message = "<h1>NOT FOUND</h1>";
 
-  void ServerHTTP::start(int port) {
-    s->create(port);
-    std::cout << "Server started on port " << port << std::endl;
-    std::vector<std::shared_ptr<ServerThread>> clients;
+    std::string ServerHTTP::default404Message = "<h1>NOT FOUND</h1>";
 
-    while (true) {
-      auto client = s->accept();
-      if (client == nullptr) {
-        continue;
-      }
-      std::cout << "Client connected" << std::endl;
-      auto serverThread =
-          std::make_shared<ServerThread>(std::move(client), routes, middlewares);
-      clients.push_back(serverThread);
-    }
-  }
+    void ServerHTTP::start(int port) {
+        if (!s->create(port)) {
+            std::cerr << "Failed to start HTTP server\n";
+            return;
+        }
 
-  void ServerHTTP::start(int port,
-                         const char* certFile,
-                         const char* keyFile) {
+        std::cout << "Server started on port " << port << '\n';
 
-    if (!secure) {
-      std::cerr << "Server not configured for TLS\n";
-      return;
-    }
+        std::vector<std::shared_ptr<ServerThread>> clients;
 
-    SecureSocket* secureSocket = (SecureSocket*)(s.get());
+        while (true) {
+            auto client = s->accept();
 
-    if (!secureSocket->create(port, certFile, keyFile)) {
-      std::cerr << "Failed to start HTTPS server\n";
-      return;
+            if (!client)
+                continue;
+
+            std::cout << "Client connected\n";
+
+            auto serverThread = std::make_shared<ServerThread>(
+                std::move(client),
+                router,
+                middlewares
+            );
+
+            clients.push_back(serverThread);
+        }
     }
 
-    std::cout << "HTTPS Server started on port " << port << std::endl;
+    void ServerHTTP::start(int port,
+        const char* certFile,
+        const char* keyFile) {
 
-    std::vector<std::shared_ptr<ServerThread>> clients;
+        if (!secure) {
+            std::cerr << "Server not configured for TLS\n";
+            return;
+        }
 
-    while (true) {
-      auto client = s->accept();
-      if (!client) continue;
+        auto* secureSocket = static_cast<SecureSocket*>(s.get());
 
-      std::cout << "Secure client connected" << std::endl;
+        if (!secureSocket->create(port, certFile, keyFile)) {
+            std::cerr << "Failed to start HTTPS server\n";
+            return;
+        }
 
-      auto serverThread = std::make_shared<ServerThread>(std::move(client), routes, middlewares);
+        std::cout << "HTTPS Server started on port " << port << '\n';
 
-      clients.push_back(serverThread);
+        std::vector<std::shared_ptr<ServerThread>> clients;
+
+        while (true) {
+            auto client = s->accept();
+
+            if (!client)
+                continue;
+
+            std::cout << "Secure client connected\n";
+
+            auto serverThread = std::make_shared<ServerThread>(
+                std::move(client),
+                router,
+                middlewares
+            );
+
+            clients.push_back(serverThread);
+        }
     }
-  }
 
+    void ServerHTTP::addRoute(std::string method,
+        std::string path,
+        Route route) {
+        router.insertRoute(std::move(method),
+            std::move(path),
+            std::move(route));
+    }
 
-  void ServerHTTP::addRoute(std::string method, std::string path, Route route) {
-    routes[method + ":" + path] = route;
-  }
-
-  void ServerHTTP::addMiddleware(Middleware middleware) {
-    middlewares.push_back(middleware);
-  }
+    void ServerHTTP::addMiddleware(Middleware middleware) {
+        middlewares.push_back(std::move(middleware));
+    }
 
 } // namespace maziogra_http

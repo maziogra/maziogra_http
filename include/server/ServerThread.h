@@ -1,16 +1,18 @@
 #pragma once
-#include "server/types/RouteTypes.h"
-#include <map>
-#include <thread>
+
+#include <server/types/RouteTypes.h>
 #include <socket/Socket.h>
 #include <vector>
-
+#include <thread>
 
 namespace maziogra_http {
+
+    class Router;
+
     class ServerThread {
     private:
         std::unique_ptr<Socket> sock;
-        std::map<std::string, Route> routes;
+        Router& router;
         std::vector<Middleware> middlewares;
         std::string buffer;
         Route r;
@@ -22,14 +24,18 @@ namespace maziogra_http {
     public:
         ServerThread(
             std::unique_ptr<Socket> sock,
-            const std::map<std::string, Route>& routes,
-            const std::vector<Middleware> &middlewares
-            )
-        : sock(std::move(sock)), routes(routes), middlewares(middlewares) {
+            Router& router,
+            const std::vector<Middleware>& middlewares
+        )
+            : sock(std::move(sock)),
+            router(router),
+            middlewares(middlewares)
+        {
             std::thread([this]() { this->run(); }).detach();
         }
 
         ServerThread(const ServerThread&) = delete;
         ServerThread& operator=(const ServerThread&) = delete;
     };
-}
+
+} // namespace maziogra_http
